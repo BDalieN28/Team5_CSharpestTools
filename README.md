@@ -10,4 +10,4 @@ sequenceDiagram
 	participant MoveGen as MoveGenerator (pseudoLegalMoves etc.)
 	participant Rule as RuleChecker (isSquareAttacked / inCheck)
 	participant MoveObj as Move (Move.fromUci / toUci)
-```mermaid
+```
