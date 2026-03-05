@@ -53,11 +53,17 @@ sequenceDiagram
 	activate Engine
 	Engine ->> Parser: parse "go" options (movetime/wtime/etc.)
 	Engine ->> MoveGen: legalMoves = Position.legalMoves()
+
 	activate MoveGen
-	MoveGen -->> Engine: returns legalMoves list
+	MoveGen ->> Rule: scoredMoves = RuleChecker.scoreLegalMoves(legalMoves)
 	deactivate MoveGen
 
-	Engine ->> Engine: choose first move (legalMoves.get(0))
+	activate Rule
+	Rule ->> Rule: sortedMoves = RuleChecker.rankMoves(scoredMoves)
+	Rule -->> Engine: returns sortedMoves list
+	deactivate Rule
+
+	Engine ->> Engine: choose best move (sortedMoves.get(0))
 	Engine ->> MoveObj: selectedMove.toUci()
 	Engine -->> Host: "bestmove e2e4"
 	deactivate Engine
