@@ -3,6 +3,7 @@ Repository for my team's chess engine.
 Members: Brandon Deel, Nathaniel Garcia, Daniel Kim, Zachary Agle, Kevin Wang, Kevin Yu!
 //Pull Request change example comment
 //Pull request created 3/2/26 at approximately 11pm
+//This diagram illustrates the UCI communication protocol between the chess GUI and the chess engine, showing how they exchange commands to initialize, set up board positions, and calculate the best move.
 
 ```mermaid
 sequenceDiagram
@@ -67,7 +68,6 @@ sequenceDiagram
 	Engine ->> MoveObj: selectedMove.toUci()
 	Engine -->> Host: "bestmove e2e4"
 	deactivate Engine
-
 
 	Host ->> Engine: "quit"
 	activate Engine
