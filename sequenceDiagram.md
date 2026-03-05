@@ -24,3 +24,15 @@ sequenceDiagram
 	Engine -->> Host: "id author <author>"
 	Engine -->> Host: "uciok"
 	deactivate Engine
+
+	Host ->> Engine: "isready"
+	activate Engine
+	Engine ->> Engine: parse "isready"
+	Engine -->> Host: "readyok"
+	deactivate Engine
+
+	Host ->> Engine: "ucinewgame"
+	activate Engine
+	Engine ->> Position: Position.startPos() // reset position to starting
+	Engine -->> Host: (ack no response required)
+	deactivate Engine
