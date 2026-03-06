@@ -1,5 +1,5 @@
 # Team5_CSharpestTools
-Repository for my team's chess engine.  
+Sequence Diagram for my team's chess engine.  
 Members: Brandon Deel, Nathaniel Garcia, Daniel Kim, Zachary Agle, Kevin Wang, Kevin Yu!
 //Pull Request change example comment
 //Pull request created 3/2/26 at approximately 11pm
