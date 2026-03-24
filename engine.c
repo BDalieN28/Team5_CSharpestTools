@@ -184,6 +184,12 @@ int is_black(char c) {
     return 0;
 }
 
+char is_promo(const Pos* p, int from, int white, Move *m) {
+    int r = (from / 8);
+    char pro;
+
+}
+
 //#include "Pawn.c"
 
 static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
