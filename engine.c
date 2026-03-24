@@ -189,56 +189,60 @@ int is_black(char c) {
 static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
     int r = (from / 8) + 1; 
     //int f = from % 8;
-    int to = moves[*n].to;
-    char toch = p->b[to];
+    //int to = moves[*n].to;
+    
     char promo = moves[*n].promo;
 
-    if (white == 1) { //check if it's a white pawn
-        
-        //check if slot one square ahead is empty
-        if ((to == (from + 8) && (toch == '.'))) {
-            add_move(moves, n, from, to, promo);
+    static const int nd[8] = { 8, 16, 7, 9, -8, -16, -7, -9 };
+    for (int i = 0; i < 8; i++) {
+        int to = from + nd[i];
+        char toch = p->b[to];
+        if (white == 1) { //check if it's a white pawn
+            //check if slot one square ahead is empty
+            if ((to == (from + 8) && (toch == '.'))) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
+            if ((r == 2) && (to == (from + 16)) && (toch == '.')) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if left diagonal square contains an enemy
+            if ((to == (from + 7)) && (is_black(toch))) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if right diagonal square contains an enemy
+            if ((to == (from + 9)) && (is_black(toch))) {
+                add_move(moves, n, from, to, promo);
+            }
         }
 
-        //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
-        if ((r == 2) && (to == (from + 16)) && (toch == '.')) {
-            add_move(moves, n, from, to, promo);
-        }
-        
-        //check if left diagonal square contains an enemy
-        if ((to == (from + 7)) && (is_black(toch))) {
-            add_move(moves, n, from, to, promo);
+        else if (white == 0) { //check if it's a black pawn
+
+            //check if one square ahead is empty
+            if ((to == (from - 8) && (toch == '.'))) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
+            if ((r == 7) && (to == (from - 16)) && (toch == '.')) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if right diagonal square contains an enemy
+            if ((to == (from - 7)) && !(is_black(toch))) {
+                add_move(moves, n, from, to, promo);
+            }
+
+            //check if left diagonal square contains an enemy
+            if ((to == (from - 9)) && !(is_black(toch))) {
+                add_move(moves, n, from, to, promo);
+            }
         }
 
-        //check if right diagonal square contains an enemy
-        if ((to == (from + 9)) && (is_black(toch))) {
-            add_move(moves, n, from, to, promo);
-        }
     }
-
-    else if (white == 0) { //check if it's a black pawn
-
-        //check if one square ahead is empty
-        if ((to == (from - 8) && (toch == '.'))) {
-            add_move(moves, n, from, to, promo);
-        }
-
-        //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
-        if ((r == 7) && (to == (from - 16)) && (toch == '.')) {
-            add_move(moves, n, from, to, promo);
-        }
-
-        //check if right diagonal square contains an enemy
-        if ((to == (from - 7)) && !(is_black(toch))) {
-            add_move(moves, n, from, to, promo);
-        }
-
-        //check if left diagonal square contains an enemy
-        if ((to == (from - 9)) && !(is_black(toch))) {
-            add_move(moves, n, from, to, promo);
-        }
-    }
-
 }
 
 static void gen_knight(const Pos* p, int from, int white, Move* moves, int* n) {
@@ -371,18 +375,24 @@ static void print_bestmove(Move m) {
 
 void test_brandon() {
     Pos p;
-    int from = 8;
     int white = 1;
-    Move moves[10];
+    Move moves[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
     int n = 0;
     memset(p.b, '.', 64);
     p.white_to_move = 1;
-    p.b[17] = 'P';
-    moves[0].from = 16;
-    moves[0].to = 32;
+    p.b[16] = 'p';
+    p.b[18] = 'b';
+    //moves[n].from = 49;
+    int from = 9;
+    //moves[n].to = 24;
     //moves[0].promo = "";
     gen_pawn(&p, from, white, moves, &n);
 
+
+
+    for (int i = 0; i < n; i++) {
+        printf("from = %d  to = %d\n", moves[i].from, moves[i].to);
+    }
     
 }
 
