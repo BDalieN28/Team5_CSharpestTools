@@ -184,10 +184,23 @@ int is_black(char c) {
     return 0;
 }
 
-char is_promo(const Pos* p, int from, int white, Move *m) {
+char promote_pawn(const Pos *p, int from, int white) {
     int r = (from / 8);
-    char pro;
+    char promo_stat;
+    if (white == 1) {
+        if (r == 8 && p->b[from] == 'P') {
+            promo_stat = 'Q';
+        }
+    }
 
+    else if (white == 0) {
+        if (r == 1 && p->b[from] == 'p') {
+            promo_stat = 'q';
+        }
+    }
+
+    return promo_stat;
+    
 }
 
 //#include "Pawn.c"
