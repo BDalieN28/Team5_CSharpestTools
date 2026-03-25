@@ -184,17 +184,18 @@ int is_black(char c) {
     return 0;
 }
 
-char promote_pawn(const Pos *p, int from, int white) {
-    int r = (from / 8);
+char promote_pawn(const Pos *p, int to, int white) {
+    int r = (to / 8) + 1;
     char promo_stat;
+    promo_stat = '\0'; //make a char that is 0 for boolean logic, not actual 0 on ASCII table
     if (white == 1) {
-        if (r == 8 && p->b[from] == 'P') {
+        if (r == 8) {
             promo_stat = 'Q';
         }
     }
 
     else if (white == 0) {
-        if (r == 1 && p->b[from] == 'p') {
+        if (r == 1) {
             promo_stat = 'q';
         }
     }
@@ -216,6 +217,9 @@ static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
     for (int i = 0; i < 8; i++) {
         int to = from + nd[i];
         char toch = p->b[to];
+
+        char promo = promote_pawn(p, to, white);
+
         if (white == 1) { //check if it's a white pawn
             //check if slot one square ahead is empty
             if ((to == (from + 8) && (toch == '.'))) {
@@ -260,8 +264,10 @@ static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
                 add_move(moves, n, from, to, promo);
             }
         }
-
+        
     }
+
+    
 }
 
 static void gen_knight(const Pos* p, int from, int white, Move* moves, int* n) {
@@ -399,18 +405,17 @@ void test_brandon() {
     int n = 0;
     memset(p.b, '.', 64);
     p.white_to_move = 1;
-    p.b[16] = 'p';
+    p.b[49] = 'P';
     p.b[18] = 'b';
-    //moves[n].from = 49;
-    int from = 9;
-    //moves[n].to = 24;
-    //moves[0].promo = "";
+
+    int from = 49;
+
     gen_pawn(&p, from, white, moves, &n);
 
 
 
     for (int i = 0; i < n; i++) {
-        printf("from = %d  to = %d\n", moves[i].from, moves[i].to);
+        printf("from = %d  to = %d promo = %c\n", moves[i].from, moves[i].to, moves[i].promo);
     }
     
 }
