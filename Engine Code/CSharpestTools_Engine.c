@@ -206,18 +206,12 @@ static void gen_rook(const Pos *p, int from, int white, const int dirs[][2], int
 
             // if square is empty, add to possible moves array
             if (pc == '.') {
-                moves[*n].from = from;
-                moves[*n].to = sq;
-                moves[*n].promo = 0;
-                (*n)++;
+                add_move(moves, n, from, sq, 0);
             } else {    // if you encounter another piece, move on to next direction after checking the piece color
                         // if it's an opponent's piece, add square to possible moves array
                 int target_white = is_white_piece(pc);
                 if (target_white != white) {
-                    moves[*n].from = from;
-                    moves[*n].to = sq;
-                    moves[*n].promo = 0;
-                    (*n)++;
+                    add_move(moves, n, from, sq, 0);
                 }
                 break;
             }
