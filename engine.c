@@ -270,21 +270,21 @@ static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
     
 }
 
-static void gen_knight(const Pos* p, int from, int white, Move* moves, int* n) {
-    int r = from / 8, f = from % 8;
-    static const int nd[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
-    for (int i = 0; i < 8; i++) {
-        int to = from + nd[i];
-        if (to < 0 || to >= 64) continue;
-        int tr = to / 8, tf = to % 8;
-        int dr = tr - r;
-        if (dr < 0) dr = -dr;
-        int df = tf - f;
-        if (df < 0) df = -df;
-        if (!((dr == 1 && df == 2) || (dr == 2 && df == 1))) continue;
-        char pc = p->b[to];
-        if (pc == '.' || is_white_piece(pc) != white) {
-            add_move(moves, n, from, to, 0);
+static void gen_knight(const Pos *p, int from, int white, Move *moves, int *n) {
+    int r = from / 8, f = from % 8; //get rank/file of the knight
+    static const int nd[8] = {-17, -15, -10, -6, 6, 10, 15, 17}; //knight move offsets
+    for (int i = 0; i < 8; i++) {  //for each possible knight move
+        int to = from + nd[i]; //calculate target square index
+        if (to < 0 || to >= 64) continue; //skip if target square is off the board
+        int tr = to / 8, tf = to % 8; //get rank/file of the target square
+        int dr = tr - r; //get rank difference
+        if (dr < 0) dr = -dr; //absolute value of rank difference
+        int df = tf - f; //get file difference
+        if (df < 0) df = -df; //absolute value of file difference
+        if (!((dr == 1 && df == 2) || (dr == 2 && df == 1))) continue;  //skip if not a valid knight move
+        char pc = p->b[to]; //get piece on target square
+        if (pc == '.' || is_white_piece(pc) != white) { //if target square is empty or occupied by opponent's piece
+            add_move(moves, n, from, to, 0); //add move to the list of moves
         }
     }
 }
