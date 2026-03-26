@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,14 +16,12 @@ typedef struct {
     int white_to_move;
 } Pos;
 
-//turns character array of rank and file into square index int
 static int sq_index(const char *s) {
     int file = s[0] - 'a';
     int rank = s[1] - '1';
     return rank * 8 + file;
 }
 
-//turns square index int into rank and file character array
 static void index_to_sq(int idx, char out[3]) {
     out[0] = (char) ('a' + (idx % 8));
     out[1] = (char) ('1' + (idx / 8));
@@ -41,8 +37,8 @@ static void pos_from_fen(Pos *p, const char *fen) {
     buf[sizeof(buf) - 1] = 0;
 
     char *save = NULL;
-    char *placement = strtok_s(buf, " ", &save);
-    char *stm = strtok_s(NULL, " ", &save);
+    char *placement = strtok_r(buf, " ", &save);
+    char *stm = strtok_r(NULL, " ", &save);
     if (stm) p->white_to_move = (strcmp(stm, "w") == 0);
 
     int rank = 7, file = 0;
@@ -174,16 +170,6 @@ static void add_move(Move *moves, int *n, int from, int to, char promo) {
     (*n)++;
 }
 
-int is_black(char c) {
-    if (c != '.') {
-        if (islower(c) != 0) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 char promote_pawn(const Pos *p, int to, int white) {
     int r = (to / 8) + 1;
     char promo_stat;
@@ -201,10 +187,7 @@ char promote_pawn(const Pos *p, int to, int white) {
     }
 
     return promo_stat;
-    
 }
-
-//#include "Pawn.c"
 
 static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
     int r = (from / 8) + 1; 
@@ -232,18 +215,17 @@ static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
             }
 
             //check if left diagonal square contains an enemy
-            if ((to == (from + 7)) && (is_black(toch))) {
+            if ((to == (from + 7)) && !(is_white_piece(toch))) {
                 add_move(moves, n, from, to, promo);
             }
 
             //check if right diagonal square contains an enemy
-            if ((to == (from + 9)) && (is_black(toch))) {
+            if ((to == (from + 9)) && !(is_white_piece(toch))) {
                 add_move(moves, n, from, to, promo);
             }
         }
 
         else if (white == 0) { //check if it's a black pawn
-
             //check if one square ahead is empty
             if ((to == (from - 8) && (toch == '.'))) {
                 add_move(moves, n, from, to, promo);
@@ -255,19 +237,16 @@ static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
             }
 
             //check if right diagonal square contains an enemy
-            if ((to == (from - 7)) && !(is_black(toch))) {
+            if ((to == (from - 7)) && is_white_piece(toch)) {
                 add_move(moves, n, from, to, promo);
             }
 
             //check if left diagonal square contains an enemy
-            if ((to == (from - 9)) && !(is_black(toch))) {
+            if ((to == (from - 9)) && is_white_piece(toch)) {
                 add_move(moves, n, from, to, promo);
             }
         }
-        
     }
-
-    
 }
 
 static void gen_knight(const Pos* p, int from, int white, Move* moves, int* n) {
@@ -292,7 +271,8 @@ static void gen_knight(const Pos* p, int from, int white, Move* moves, int* n) {
 static void gen_queen(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
     int r = from / 8;
     int f = from % 8;
-
+    
+    // must check all possible directions, dcount = 8
     for (int di = 0; di < dcount; di++) {
         int df = dirs[di][0];
         int dr = dirs[di][1];
@@ -312,79 +292,98 @@ static void gen_queen(const Pos *p, int from, int white, const int dirs[][2], in
                 }
                 break;
             }
-
             cr += dr;
             cf += df;
         }
     }
-
 }
 
 static void gen_bishop(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
-    int r = from / 8, f = from % 8;                          //get rank/file of the bishop
-   
-    for (int i = 0; i < dcount; i++) {                       //for each diagonal direction
-        int cr = r + dirs[i][1];                             //calculate target square rank
-        int cf = f + dirs[i][0];                             //calculate target square file
-        
-        while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {     //while target square is on the board
-            int to = cr * 8 + cf;                            //calculate target square index
-            char pc = p->b[to];                              //get piece on target square
-           
-            if (pc == '.') {                                 //if target square is empty
-                add_move(moves, n, from, to, 0);             //add move to the list of moves
-            } else {                                         //if target square is occupied
-                if (is_white_piece(pc) != white) {           //if target square is occupied by opponent's piece
-                    add_move(moves, n, from, to, 0);         //add capture move to the list of moves
+    int r = from / 8;
+    int f = from % 8;
+
+    // diagonal slider only, dcount = 4
+    for (int di = 0; di < dcount; di++) {
+        int df = dirs[di][0];
+        int dr = dirs[di][1];
+        int cr = r + dr;
+        int cf = f + df;
+
+        while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {
+            int to = cr * 8 + cf;
+            char target = p->b[to];
+
+            if (target == '.') {
+                add_move(moves, n, from, to, 0);
+            } else {
+                int target_white = is_white_piece(target);
+                if (target_white != white) {
+                    add_move(moves, n, from, to, 0);
                 }
-                break;                                       //stop sliding in this direction (blocked by any piece)
+                break;
             }
-            
-            cr += dirs[i][1];                                //move to next square in this direction
-            cf += dirs[i][0];                                //move to next square in this direction
+            cr += dr;
+            cf += df;
         }
     }
 }
 
 static void gen_rook(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
-    // current position of rook on board
-    int r = from / 8; // starting rank
-    int f = from % 8; // starting file
+    int r = from / 8;
+    int f = from % 8;
 
-    // direction of movement
+    // horizontal and vertical slider only, dcount = 4
     for (int di = 0; di < dcount; di++) {
-        int dr = dirs[di][0];
-        int df = dirs[di][1];
-
+        int df = dirs[di][0];
+        int dr = dirs[di][1];
         int cr = r + dr;
         int cf = f + df;
 
-        // check each square in that direction
         while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {
-            int sq = cr * 8 + cf;
-            char pc = p->b[sq];
+            int to = cr * 8 + cf;
+            char target = p->b[to];
 
-            // if square is empty, add to possible moves array
-            if (pc == '.') {
-                add_move(moves, n, from, sq, 0);
-            } else {    // if you encounter another piece, move on to next direction after checking the piece color
-                        // if it's an opponent's piece, add square to possible moves array
-                int target_white = is_white_piece(pc);
+            if (target == '.') {
+                add_move(moves, n, from, to, 0);
+            } else {
+                int target_white = is_white_piece(target);
                 if (target_white != white) {
-                    add_move(moves, n, from, sq, 0);
+                    add_move(moves, n, from, to, 0);
                 }
                 break;
             }
-            // increment to next square in this direction
             cr += dr;
             cf += df;
         }
     }
-
 }
 
-static void gen_king(const Pos *p, int from, int white, Move *moves, int *n) {
+static void gen_king(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
+    int r = from / 8;
+    int f = from % 8;
 
+    // horizontal and vertical directionality, but only for one square, dcount = 8
+    for (int di = 0; di < dcount; di++) {
+        int df = dirs[di][0];
+        int dr = dirs[di][1];
+        int cr = r + dr;
+        int cf = f + df;
+
+        if (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {
+            int to = cr * 8 + cf;
+            char target = p->b[to];
+
+            if (target == '.') {
+                add_move(moves, n, from, to, 0);
+            } else {
+                int target_white = is_white_piece(target);
+                if (target_white != white) {
+                    add_move(moves, n, from, to, 0);
+                }
+                break;
+            }
+        }
+    }
 }
 
 static int pseudo_legal_moves(const Pos *p, Move *moves) {
@@ -407,7 +406,10 @@ static int pseudo_legal_moves(const Pos *p, Move *moves) {
         } else if (up == 'Q') {
             static const int d[8][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
             gen_queen(p, i, white, d, 8, moves, &n);
-        } else if (up == 'K') gen_king(p, i, white, moves, &n);
+        } else if (up == 'K') {
+            static const int d[8][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            gen_king(p, i, white, d, 8, moves, &n);
+        }
     }
     return n;
 }
@@ -446,7 +448,7 @@ static void parse_position(Pos *p, const char *line) {
     char *toks[128];
     int nt = 0;
     char *save = NULL;
-    for (char *tok = strtok_s(buf, " \t\r\n", &save); tok && nt < 128; tok = strtok_s(NULL, " \t\r\n", &save)) {
+    for (char *tok = strtok_r(buf, " \t\r\n", &save); tok && nt < 128; tok = strtok_r(NULL, " \t\r\n", &save)) {
         toks[nt++] = tok;
     }
 
@@ -480,34 +482,10 @@ static void print_bestmove(Move m) {
     fflush(stdout);
 }
 
-void test_brandon() {
-    Pos p;
-    int white = 1;
-    Move moves[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
-    int n = 0;
-    memset(p.b, '.', 64);
-    p.white_to_move = 1;
-    p.b[49] = 'P';
-    p.b[18] = 'b';
-
-    int from = 49;
-
-    gen_pawn(&p, from, white, moves, &n);
-
-
-
-    for (int i = 0; i < n; i++) {
-        printf("from = %d  to = %d promo = %c\n", moves[i].from, moves[i].to, moves[i].promo);
-    }
-    
-}
-
 int main(void) {
     Pos pos;
     pos_start(&pos);
 
-    test_brandon(); //debug
-    
     char line[1024];
     while (fgets(line, sizeof(line), stdin)) {
         // trim
