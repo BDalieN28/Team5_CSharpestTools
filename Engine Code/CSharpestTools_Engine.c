@@ -179,6 +179,33 @@ static void gen_knight(const Pos *p, int from, int white, Move *moves, int *n) {
 }
 
 static void gen_queen(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
+    int r = from / 8;
+    int f = from % 8;
+
+    for (int di = 0; di < dcount; di++) {
+        int df = dirs[di][0];
+        int dr = dirs[di][1];
+        int cr = r + dr;
+        int cf = f + df;
+
+        while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {
+            int to = cr * 8 + cf;
+            char target = p->b[to];
+
+            if (target == '.') {
+                add_move(moves, n, from, to, 0);
+            } else {
+                int target_white = is_white_piece(target);
+                if (target_white != white) {
+                    add_move(moves, n, from, to, 0);
+                }
+                break;
+            }
+
+            cr += dr;
+            cf += df;
+        }
+    }
 
 }
 
