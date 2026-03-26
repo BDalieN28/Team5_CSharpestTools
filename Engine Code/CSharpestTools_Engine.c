@@ -187,7 +187,45 @@ static void gen_bishop(const Pos *p, int from, int white, const int dirs[][2], i
 }
 
 static void gen_rook(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
+    // current position of rook on board
+    int r = from / 8; // starting rank
+    int f = from % 8; // starting file
 
+    // direction of movement
+    for (int di = 0; di < dcount; di++) {
+        int dr = dirs[di][0];
+        int df = dirs[di][1];
+
+        int cr = r + dr;
+        int cf = f + df;
+
+        // check each square in that direction
+        while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {
+            int sq = cr * 8 + cf;
+            char pc = p->b[sq];
+
+            // if square is empty, add to possible moves array
+            if (pc == '.') {
+                moves[*n].from = from;
+                moves[*n].to = sq;
+                moves[*n].promo = 0;
+                (*n)++;
+            } else {    // if you encounter another piece, move on to next direction after checking the piece color
+                        // if it's an opponent's piece, add square to possible moves array
+                int target_white = is_white_piece(pc);
+                if (target_white != white) {
+                    moves[*n].from = from;
+                    moves[*n].to = sq;
+                    moves[*n].promo = 0;
+                    (*n)++;
+                }
+                break;
+            }
+            // increment to next square in this direction
+            cr += dr;
+            cf += df;
+        }
+    }
 }
 
 static void gen_king(const Pos *p, int from, int white, Move *moves, int *n) {
