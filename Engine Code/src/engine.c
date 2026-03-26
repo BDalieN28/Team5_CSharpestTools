@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
     char b[64];
     int white_to_move;
+    int cK, cQ, ck, cq;  // castling rights, capital = white, else = black
 } Pos;
 
 static int sq_index(const char *s) {
@@ -31,6 +32,10 @@ static void index_to_sq(int idx, char out[3]) {
 static void pos_from_fen(Pos *p, const char *fen) {
     memset(p->b, '.', 64);
     p->white_to_move = 1;
+    p->cK = 0;
+    p->cQ = 0;
+    p->ck = 0;
+    p->cq = 0;
 
     char buf[256];
     strncpy(buf, fen, sizeof(buf)-1);
@@ -39,7 +44,19 @@ static void pos_from_fen(Pos *p, const char *fen) {
     char *save = NULL;
     char *placement = strtok_r(buf, " ", &save);
     char *stm = strtok_r(NULL, " ", &save);
+    char *castling = strtok_r(NULL, " ", &save);
     if (stm) p->white_to_move = (strcmp(stm, "w") == 0);
+
+    if (strcmp(castling, "-") != 0) {
+        for (int i = 0; castling[i]; i++) {
+            switch (castling[i]) {
+                case 'K': p->cK = 1; break;
+                case 'Q': p->cQ = 1; break;
+                case 'k': p->ck = 1; break;
+                case 'q': p->cq = 1; break;
+            }
+        }
+    }
 
     int rank = 7, file = 0;
     for (size_t i = 0; placement && placement[i]; i++) {
@@ -160,6 +177,29 @@ static Pos make_move(const Pos *p, Move m) {
     }
     np.b[m.to] = placed;
     np.white_to_move = !p->white_to_move;
+
+    if (piece == 'K') { np.cK = 0; np.cQ = 0; }
+    if (piece == 'k') { np.ck = 0; np.cq = 0; }
+ 
+    if (m.from == 0  || m.to == 0)  np.cQ = 0; 
+    if (m.from == 7  || m.to == 7)  np.cK = 0; 
+    if (m.from == 56 || m.to == 56) np.cq = 0;  
+    if (m.from == 63 || m.to == 63) np.ck = 0;  
+
+    if (piece == 'K') {
+        if (m.from == 4 && m.to == 6) { 
+            np.b[5] = 'R'; np.b[7] = '.';  
+        } else if (m.from == 4 && m.to == 2) { 
+            np.b[3] = 'R'; np.b[0] = '.';    
+        }
+    }
+    if (piece == 'k') {
+        if (m.from == 60 && m.to == 62) {    
+            np.b[61] = 'r'; np.b[63] = '.';   
+        } else if (m.from == 60 && m.to == 58) { 
+            np.b[59] = 'r'; np.b[56] = '.';    
+        }
+    }
     return np;
 }
 
@@ -189,11 +229,31 @@ char promote_pawn(const Pos *p, int to, int white) {
     return promo_stat;
 }
 
+static void eval_castling(const Pos *p, int white, Move *moves, int *n) {
+    if (in_check(p, white)) return;
+    if (white) {
+        if (p->cK && p->b[4] == 'K' && p->b[7] == 'R' && p->b[5] == '.'      
+            && p->b[6] == '.' && !is_square_attacked(p, 5, !white)) {
+            add_move(moves, n, 4, 6, 0);
+        }
+        if (p->cQ && p->b[4] == 'K' && p->b[0] == 'R' && p->b[1] == '.'        
+            && p->b[2] == '.' && p->b[3] == '.' && !is_square_attacked(p, 3, !white)) {
+            add_move(moves, n, 4, 2, 0);
+        }
+    } else {
+        if (p->ck && p->b[60] == 'k' && p->b[63] == 'r' && p->b[61] == '.'       
+            && p->b[62] == '.' && !is_square_attacked(p, 61, !white)) {
+            add_move(moves, n, 60, 62, 0);
+        }
+        if (p->cq && p->b[60] == 'k' && p->b[56] == 'r' && p->b[57] == '.'  
+            && p->b[58] == '.' && p->b[59] == '.' && !is_square_attacked(p, 59, !white)) {
+            add_move(moves, n, 60, 58, 0);
+        }
+    }
+}
+
 static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
     int r = (from / 8) + 1; 
-    //int f = from % 8;
-    //int to = moves[*n].to;
-    
     char promo = moves[*n].promo;
 
     static const int nd[8] = { 8, 16, 7, 9, -8, -16, -7, -9 };
@@ -384,6 +444,7 @@ static void gen_king(const Pos *p, int from, int white, const int dirs[][2], int
             }
         }
     }
+    eval_castling(p, white, moves, n);
 }
 
 static int pseudo_legal_moves(const Pos *p, Move *moves) {
@@ -488,7 +549,6 @@ int main(void) {
 
     char line[1024];
     while (fgets(line, sizeof(line), stdin)) {
-        // trim
         size_t len = strlen(line);
         while (len && (line[len - 1] == '\n' || line[len - 1] == '\r')) line[--len] = 0;
         if (!len) continue;
