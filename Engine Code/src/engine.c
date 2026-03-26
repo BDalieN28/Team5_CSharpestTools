@@ -321,7 +321,29 @@ static void gen_queen(const Pos *p, int from, int white, const int dirs[][2], in
 }
 
 static void gen_bishop(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
-
+    int r = from / 8, f = from % 8;                          //get rank/file of the bishop
+   
+    for (int i = 0; i < dcount; i++) {                       //for each diagonal direction
+        int cr = r + dirs[i][1];                             //calculate target square rank
+        int cf = f + dirs[i][0];                             //calculate target square file
+        
+        while (cr >= 0 && cr < 8 && cf >= 0 && cf < 8) {     //while target square is on the board
+            int to = cr * 8 + cf;                            //calculate target square index
+            char pc = p->b[to];                              //get piece on target square
+           
+            if (pc == '.') {                                 //if target square is empty
+                add_move(moves, n, from, to, 0);             //add move to the list of moves
+            } else {                                         //if target square is occupied
+                if (is_white_piece(pc) != white) {           //if target square is occupied by opponent's piece
+                    add_move(moves, n, from, to, 0);         //add capture move to the list of moves
+                }
+                break;                                       //stop sliding in this direction (blocked by any piece)
+            }
+            
+            cr += dirs[i][1];                                //move to next square in this direction
+            cf += dirs[i][0];                                //move to next square in this direction
+        }
+    }
 }
 
 static void gen_rook(const Pos *p, int from, int white, const int dirs[][2], int dcount, Move *moves, int *n) {
