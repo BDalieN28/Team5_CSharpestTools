@@ -253,56 +253,42 @@ static void eval_castling(const Pos *p, int white, Move *moves, int *n) {
 }
 
 static void gen_pawn(const Pos *p, int from, int white, Move *moves, int *n) {
-    int r = (from / 8) + 1; 
-    char promo = moves[*n].promo;
+    int r = (from / 8) + 1;
+    int f = from % 8;
 
     static const int nd[8] = { 8, 16, 7, 9, -8, -16, -7, -9 };
     for (int i = 0; i < 8; i++) {
         int to = from + nd[i];
+        if (to < 0 || to >= 64) continue;
+        int tf = to % 8;
         char toch = p->b[to];
-
         char promo = promote_pawn(p, to, white);
 
-        if (white == 1) { //check if it's a white pawn
-            //check if slot one square ahead is empty
-            if ((to == (from + 8) && (toch == '.'))) {
+        if (white == 1) {
+            if ((to == (from + 8)) && (toch == '.')) {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
-            if ((r == 2) && (to == (from + 16)) && (toch == '.')) {
+            if ((r == 2) && (to == (from + 16)) && (toch == '.') && p->b[from + 8] == '.') {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if left diagonal square contains an enemy
-            if ((to == (from + 7)) && !(is_white_piece(toch))) {
+            if ((to == (from + 7)) && toch != '.' && !(is_white_piece(toch)) && (tf == f - 1)) {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if right diagonal square contains an enemy
-            if ((to == (from + 9)) && !(is_white_piece(toch))) {
+            if ((to == (from + 9)) && toch != '.' && !(is_white_piece(toch)) && (tf == f + 1)) {
                 add_move(moves, n, from, to, promo);
             }
         }
-
-        else if (white == 0) { //check if it's a black pawn
-            //check if one square ahead is empty
-            if ((to == (from - 8) && (toch == '.'))) {
+        else if (white == 0) {
+            if ((to == (from - 8)) && (toch == '.')) {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if it's pawn's 1st move by checking its rank, then see if slot two squares ahead is empty
-            if ((r == 7) && (to == (from - 16)) && (toch == '.')) {
+            if ((r == 7) && (to == (from - 16)) && (toch == '.') && p->b[from - 8] == '.') {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if right diagonal square contains an enemy
-            if ((to == (from - 7)) && is_white_piece(toch)) {
+            if ((to == (from - 7)) && toch != '.' && is_white_piece(toch) && (tf == f + 1)) {
                 add_move(moves, n, from, to, promo);
             }
-
-            //check if left diagonal square contains an enemy
-            if ((to == (from - 9)) && is_white_piece(toch)) {
+            if ((to == (from - 9)) && toch != '.' && is_white_piece(toch) && (tf == f - 1)) {
                 add_move(moves, n, from, to, promo);
             }
         }
@@ -440,7 +426,6 @@ static void gen_king(const Pos *p, int from, int white, const int dirs[][2], int
                 if (target_white != white) {
                     add_move(moves, n, from, to, 0);
                 }
-                break;
             }
         }
     }
