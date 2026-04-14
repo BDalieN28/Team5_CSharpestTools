@@ -993,8 +993,8 @@ int main(void) {
         if (!len) continue;
 
         if (strcmp(line, "uci") == 0) {
-            printf("id name team_c\n");
-            printf("id author team_c_bryan\n");
+            printf("id name lc0_engine\n");
+            printf("id author CSharpestTools\n");
             printf("uciok\n");
             fflush(stdout);
         } else if (strcmp(line, "isready") == 0) {
