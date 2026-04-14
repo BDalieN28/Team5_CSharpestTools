@@ -10,7 +10,7 @@
 // Threefold-repetition detection prevents repeat moves.
 
 #define LC0_EXE_NAME      "lc0\\lc0.exe"
-#define LC0_WEIGHTS_FILE  "lc0\\network.pb"
+#define LC0_WEIGHTS_FILE  "lc0\\network.pb.gz"
 #define LC0_MOVETIME_MS   2000
 #define FALLBACK_DEPTH    5
 
